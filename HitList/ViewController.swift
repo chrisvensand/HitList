@@ -22,7 +22,25 @@ class ViewController: UIViewController {
         tableView.register(UITableViewCell.self,
                            forCellReuseIdentifier: "Cell")
     }
-
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else {
+            return
+        }
+        
+        let managedContext = appDelegate.persistentContainer.viewContext
+        
+        let fetchRequest = NSFetchRequest<NSManagedObject>(entityName: "Person")
+        
+        do {
+            people = try managedContext.fetch(fetchRequest)
+        }   catch let error as NSError {
+            print("Could not fetch. \(error), \(error.userInfo)")
+        }
+    }
+    
     @IBAction func addName(_ sender: UIBarButtonItem) {
         
         let alert = UIAlertController(title: "New Name",
@@ -51,6 +69,8 @@ class ViewController: UIViewController {
         
         present(alert, animated: true)
     }
+
+    // MARK: - Save func storing names to Core Data
     
     func save(name: String) {
         
@@ -58,20 +78,16 @@ class ViewController: UIViewController {
             return
         }
         
-        // 1
         let managedContext = appDelegate.persistentContainer.viewContext
         
-        // 2
         let entity = NSEntityDescription.entity(forEntityName: "Person",
                                                 in: managedContext)!
         
         let person = NSManagedObject(entity: entity,
                                      insertInto: managedContext)
         
-        // 3
         person.setValue(name, forKeyPath: "name")
         
-        // 4
         do {
             try managedContext.save()
             people.append(person)
